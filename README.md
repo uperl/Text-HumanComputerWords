@@ -9,7 +9,11 @@ use Text::HumanComputerWords;
 
 my $hcw = Text::HumanComputerWords->new;
 
-foreach my $combo ($hcw->split("this is some text with a url: https://metacpan.org, a unix path name: /usr/local/bin and a windows path name: c:\\Windows"))
+my $text = "this is some text with a url: https://metacpan.org, "
+         . "a unix path name: /usr/local/bin "
+         . "and a windows path name: c:\\Windows";
+
+foreach my $combo ($hcw->split($text))
 {
   my($type, $word) = @$combo;
   if($type eq 'word')
