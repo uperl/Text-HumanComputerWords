@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use 5.022;
 use experimental qw( signatures );
-use experimental qw( postderef );
 
 # ABSTRACT: Split human and computer words in a naturalish manner
 # VERSION
