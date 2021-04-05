@@ -22,6 +22,10 @@ use experimental qw( signatures );
      # $word is a regular human word
      # this, is, some, etc.
    }
+   elsif($type eq 'module')
+   {
+     # $word looks like a module
+   }
    elsif($type eq 'url_link')
    {
      # $word looks like a URL
@@ -75,6 +79,14 @@ This is a code reference which should return true if the C<$word> looks like a f
 
 This is a code reference which should return true if the C<$word> looks like a URL.
 
+=item module
+
+ Text::HumanComputerWords->new(
+   module => sub ($word) {
+     # return true if $word looks like a computer programming module
+   },
+ );
+
 =item skip
 
  Text::HumanComputerWords->new(
@@ -100,6 +112,9 @@ sub new ($class, %args)
     url_link => $args{url_name} // sub ($text) {
          $text =~ /^[a-z]+:\/\//i
       || $text =~ /^(file|ftps?|gopher|https?|ldapi|ldaps|mailto|mms|news|nntp|nntps|pop|rlogin|rtsp|sftp|snew|ssh|telnet|tn3270|urn|wss?):\S/i
+    },
+    module => $args{module} // sub ($text) {
+         $text =~ /^[a-z]+::([a-z]+(::[a-z]+)*('s)?)$/i
     },
     skip => $args{skip} // sub ($text) { 0 },
   }, $class;
@@ -128,6 +143,10 @@ For a Unix or Windows file or directory path.  VMS is not supported, sorry.
 
 For a URL.
 
+=item C<module>
+
+For a programming module.  The default is reasonable for Perl.
+
 =back
 
 =cut
@@ -148,6 +167,10 @@ sub split ($self, $text)
     elsif($self->{url_link}->($frag))
     {
       push @result, [ 'url_link', $frag ];
+    }
+    elsif($self->{module}->($frag))
+    {
+      push @result, [ 'module', $frag ];
     }
     else
     {
