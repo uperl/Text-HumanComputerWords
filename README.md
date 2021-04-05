@@ -17,6 +17,10 @@ foreach my $combo ($hcw->split("this is some text with a url: https://metacpan.o
     # $word is a regular human word
     # this, is, some, etc.
   }
+  elsif($type eq 'module')
+  {
+    # $word looks like a module
+  }
   elsif($type eq 'url_link')
   {
     # $word looks like a URL
@@ -75,6 +79,16 @@ Creates a new instance of the splitter class.  The `%options` hash lets you over
 
     This is a code reference which should return true if the `$word` looks like a URL.
 
+- module
+
+    ```perl
+    Text::HumanComputerWords->new(
+      module => sub ($word) {
+        # return true if $word looks like a computer programming module
+      },
+    );
+    ```
+
 - skip
 
     ```perl
@@ -110,6 +124,10 @@ and the second is the word.  The legal types are:
 - `url_link`
 
     For a URL.
+
+- `module`
+
+    For a programming module.  The default is reasonable for Perl.
 
 # CAVEATS
 
