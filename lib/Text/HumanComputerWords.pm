@@ -165,7 +165,7 @@ sub default_perl
 
 =head2 split
 
- my @combos = $hcw->split($text);
+ my @pairs = $hcw->split($text);
 
 This method splits the text into word combo pairs.  Each pair is returned as an array reference.  The first element is the type,
 and the second is the word.  The types are as defined when the C<$hcw> object is created, plus the C<word> type for human words.
