@@ -133,7 +133,7 @@ Returns the computer word pairs reasonable for a technical Perl document.  It re
 ## split
 
 ```perl
-my @combos = $hcw->split($text);
+my @pairs = $hcw->split($text);
 ```
 
 This method splits the text into word combo pairs.  Each pair is returned as an array reference.  The first element is the type,
