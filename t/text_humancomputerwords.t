@@ -3,7 +3,7 @@ use 5.022;
 use Text::HumanComputerWords;
 use experimental qw( signatures );
 
-subtest basic => sub {
+subtest 'basic' => sub {
 
   is(
     Text::HumanComputerWords->new( Text::HumanComputerWords->default_perl ),
@@ -27,7 +27,39 @@ subtest basic => sub {
 
 };
 
-subtest skip => sub {
+subtest 'multiple' => sub {
+
+  is(
+    Text::HumanComputerWords->new( foo_or_bar => sub ($word) { $word eq 'foo' }, foo_or_bar => sub ($word) { $word eq 'bar' }),
+    object {
+      call [ isa => 'Text::HumanComputerWords' ] => T();
+      call_list [ split => 'foo bar baz' ] => [
+        [ foo_or_bar => 'foo' ],
+        [ foo_or_bar => 'bar' ],
+        [ word       => 'baz' ],
+      ];
+    },
+  );
+
+};
+
+subtest 'order matters' => sub {
+
+  is(
+    Text::HumanComputerWords->new( foo_or_bar => sub ($word) { $word eq 'foo' }, bar => sub ($word) { $word eq 'bar' }, foo_or_bar => sub ($word) { $word eq 'bar' }),
+    object {
+      call [ isa => 'Text::HumanComputerWords' ] => T();
+      call_list [ split => 'foo bar baz' ] => [
+        [ foo_or_bar => 'foo' ],
+        [ bar        => 'bar' ],
+        [ word       => 'baz' ],
+      ];
+    },
+  );
+
+};
+
+subtest 'skip' => sub {
 
   is(
     Text::HumanComputerWords->new( skip => sub ($text) { $text eq 'foo/bar' } ),
