@@ -6,7 +6,7 @@ use experimental qw( signatures );
 subtest basic => sub {
 
   is(
-    Text::HumanComputerWords->new,
+    Text::HumanComputerWords->new( Text::HumanComputerWords->default_perl ),
     object {
       call [ isa => 'Text::HumanComputerWords' ] => T();
       call_list [ split => 'one two https://metacpan.org mailto:plicease@cpan.org /usr/local/bin /etc c:\\foo D:/bar   three Foo::Bar::Baz YAML::XS\'s' ] => [
