@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use 5.022;
 use experimental qw( signatures );
+use Ref::Util qw( is_plain_coderef );
 
 # ABSTRACT: Split human and computer words in a naturalish manner
 # VERSION
@@ -108,7 +109,8 @@ always returns false.
 
 sub new ($class, %args)
 {
-  bless {
+  bless [
+    skip => $args{skip} // sub ($text) { 0 },
     path_name => $args{path_name} // sub ($text) {
          $text =~ m{^/(bin|boot|dev|etc|home|lib|lib32|lib64|mnt|opt|proc|root|sbin|tmp|usr|var)(/|$)}
       || $text =~ m{^[a-z]:[\\/]}i
@@ -120,8 +122,7 @@ sub new ($class, %args)
     module => $args{module} // sub ($text) {
          $text =~ /^[a-z]+::([a-z]+(::[a-z]+)*('s)?)$/i
     },
-    skip => $args{skip} // sub ($text) { 0 },
-  }, $class;
+  ], $class;
 }
 
 =head1 METHODS
@@ -159,31 +160,28 @@ sub split ($self, $text)
 {
   my @result;
 
-  foreach my $frag (CORE::split /\s+/, $text)
+  frag_loop: foreach my $frag (CORE::split /\s+/, $text)
   {
     next unless $frag =~ /\w/;
-    next if$self->{skip}->($frag);
 
-    if($self->{path_name}->($frag))
+    my $i=0;
+    while(defined $self->[$i])
     {
-      push @result, [ 'path_name', $frag ];
-    }
-    elsif($self->{url_link}->($frag))
-    {
-      push @result, [ 'url_link', $frag ];
-    }
-    elsif($self->{module}->($frag))
-    {
-      push @result, [ 'module', $frag ];
-    }
-    else
-    {
-      foreach my $word (CORE::split /\b{wb}/, $frag)
+      my $name = $self->[$i++];
+      my $code = $self->[$i++];
+      if($code->($frag))
       {
-        next unless $word =~ /\w/;
-        push @result, [ 'word', $word ];
+        push @result, [ $name, $frag ] unless $name eq 'skip';
+        next frag_loop;
       }
     }
+
+    word_loop: foreach my $word (CORE::split /\b{wb}/, $frag)
+    {
+      next word_loop unless $word =~ /\w/;
+      push @result, [ word => $word ];
+    }
+
   }
 
   @result;
