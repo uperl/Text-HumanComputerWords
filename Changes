@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}},
 
 {{$NEXT}}
+
+0.02      2021-04-18 08:14:48 -0600
   - Arbitrary types can be defined, and by default not types are defined (gh#3)
   - Added default_perl method which provides reasonable defaults for Perl
     technical documentation (this is the old default for the module) (gh#3)
