@@ -75,4 +75,28 @@ subtest 'skip' => sub {
 
 };
 
+subtest 'errors' => sub {
+
+  local $@ = '';
+  eval { Text::HumanComputerWords->new( qw( one two three ) ) };
+  like "$@", qr/uneven arguments passed to constructor/;
+
+  $@='';
+  eval { Text::HumanComputerWords->new( foo => sub {}, undef, undef ) };
+  like "$@", qr/argument 3 is undef/;
+
+  $@='';
+  eval { Text::HumanComputerWords->new( foo => sub {}, foo => undef ) };
+  like "$@", qr/argument 4 is undef/;
+
+  $@='';
+  eval { Text::HumanComputerWords->new( foo => sub {}, sub {} => sub {} ) };
+  like "$@", qr/argument 3 is not a plain string/;
+
+  $@='';
+  eval { Text::HumanComputerWords->new( foo => sub {}, foo => 'bar') };
+  like "$@", qr/argument 4 is not a plain code reference/;
+
+};
+
 done_testing;

@@ -4,7 +4,8 @@ use strict;
 use warnings;
 use 5.022;
 use experimental qw( signatures );
-use Ref::Util qw( is_plain_coderef );
+use Ref::Util qw( is_ref is_plain_coderef );
+use Carp qw( croak );
 
 # ABSTRACT: Split human and computer words in a naturalish manner
 # VERSION
@@ -12,15 +13,15 @@ use Ref::Util qw( is_plain_coderef );
 =head1 SYNOPSIS
 
  use Text::HumanComputerWords;
-
+ 
  my $hcw = Text::HumanComputerWords->new(
    Text::HumanComputerWords->default_perl,
  );
-
+ 
  my $text = "this is some text with a url: https://metacpan.org, "
           . "a unix path name: /usr/local/bin "
           . "and a windows path name: c:\\Windows";
-
+ 
  foreach my $combo ($hcw->split($text))
  {
    my($type, $word) = @$combo;
@@ -117,6 +118,22 @@ types it will only be reported as the first type matches.  Example:
 
 sub new ($class, @args)
 {
+  croak "uneven arguments passed to constructor" if @args % 2;
+
+  my $i=0;
+  while(exists $args[$i])
+  {
+    my $name = $args[$i];
+    my $code = $args[$i+1];
+
+    croak "argument @{[ $i+1 ]} is undef" unless defined $name;
+    croak "argument @{[ $i+2 ]} is undef" unless defined $code;
+    croak "argument @{[ $i+1 ]} is not a plain string" if is_ref $name;
+    croak "argument @{[ $i+2 ]} is not a plain code reference" unless is_plain_coderef $code;
+
+    $i+=2;
+  }
+
   bless [@args], $class;
 }
 
