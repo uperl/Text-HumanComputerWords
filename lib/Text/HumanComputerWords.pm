@@ -13,7 +13,9 @@ use Ref::Util qw( is_plain_coderef );
 
  use Text::HumanComputerWords;
 
- my $hcw = Text::HumanComputerWords->new;
+ my $hcw = Text::HumanComputerWords->new(
+   Text::HumanComputerWords->default_perl,
+ );
 
  my $text = "this is some text with a url: https://metacpan.org, "
           . "a unix path name: /usr/local/bin "
@@ -46,51 +48,41 @@ use Ref::Util qw( is_plain_coderef );
 
 =head1 DESCRIPTION
 
-This module splits a line of text into words.  It attempts to identify certain computer "words" and classify them as such.
-The split on white space first, identify certain computer words (like URLs and file and directory paths) and then to split
-the remaining words on Unicode word boundaries which is usually pretty good at identifying human words.
+This module extracts human and computer words from text.  This is useful for checking the validity of these words.  Human
+words can be checked for spelling, while "computer" words like URLs can be validated by other means.  URLs for example
+could be checked for 404s and module names could be checked against a module registry like CPAN.
 
-The intent is to split a paragraph into human and computer words so that they can be checked all at once.  The URLs for example
-could be checked for 404s or other brokenness while the human words could be checked for spelling.
+The algorithm works like thus:
+
+=over 4
+
+=item 1. The text is split on whitespace into fragments C<< /\s/ >>
+
+fragments could be either a single computer word like a URL or a module, or it could be one or more human words.
+If a fragment doesn't contain any word characters then it is skipped entirely C<< /\w/ >>.
+
+=item 2. If the fragment is recognized as a computer word we are done.
+
+Computer words can be defined any way you want.  The C<default_perl> method below is reasonable for Perl technical
+documentation.
+
+=item 3. Split the fragment into words using the Unicode word boundary C<< /\b{wb}/ >>
+
+After the split words are identified as those containing word characters C<< /\w/ >>.
+
+=back
 
 =head1 CONSTRUCTOR
 
 =head2 new
 
- my $hcw = Text::HumanComputerWords->new(%options);
+ my $hcw = Text::HumanComputerWords->new(@cpu);
 
-Creates a new instance of the splitter class.  The C<%options> hash lets you override some of the logic for identifying
-"computer" words.  All are optional and the defaults are reasonable:
+Creates a new instance of the splitter class.  The C<@cpu> pairs lets you specify the logic for identifying
+"computer" words.  The keys are the type names and the values are code references that identify those words.
+There are two special reserved types:
 
 =over 4
-
-=item path_name
-
- Text::HumanComputerWords->new(
-   path_name => sub ($word) {
-     # return true if $word looks like a filename path
-   },
- );
-
-This is a code reference which should return true if the C<$word> looks like a file or directory path.
-
-=item url_link
-
- Text::HumanComputerWords->new(
-   url_link => sub ($word) {
-     # return true if $word looks like a URL
-   },
- );
-
-This is a code reference which should return true if the C<$word> looks like a URL.
-
-=item module
-
- Text::HumanComputerWords->new(
-   module => sub ($word) {
-     # return true if $word looks like a computer programming module
-   },
- );
 
 =item skip
 
@@ -103,56 +95,80 @@ This is a code reference which should return true if the C<$word> looks like a U
 This is a code reference which should return true, if the C<$word> should be skipped entirely.  The default skip code reference
 always returns false.
 
+=item word
+
+ Text::HumanComputerWords->new(
+   word => sub ($word) {},  # error
+ );
+
+The C<word> type is reserved for human words, and cannot be overridden.
+
+=back
+
+The order of the pairs matters and a type can be specified more than once.  If a given computer word matches multiple
+types it will only be reported as the first type matches.  Example:
+
+ Text::HumanComputerWords->new(
+   foo_or_bar => sub ($word) { $word eq 'foo' },
+   foo_or_bar => sub ($word) { $word eq 'bar' },
+ );
+
+=cut
+
+sub new ($class, @args)
+{
+  bless [@args], $class;
+}
+
+=head1 METHODS
+
+=head2 default_perl
+
+ my @cpu = Text::HumanComputerWords->default_perl;
+
+Returns the computer word pairs reasonable for a technical Perl document.  It recognizes:
+
+=over 4
+
+=item path_name
+
+A file system path.  Something that looks like a UNIX or Windows filename or directory path.
+
+=item url_link
+
+A URL.  The regex to recognize a URL is naive so if the URLs need to be validated they should be done separately.
+
+=item module
+
+A Perl module name.  C<Something::Like::This>.
+
 =back
 
 =cut
 
-sub new ($class, %args)
+sub default_perl
 {
-  bless [
-    skip => $args{skip} // sub ($text) { 0 },
-    path_name => $args{path_name} // sub ($text) {
+  return (
+    path_name => sub ($text) {
          $text =~ m{^/(bin|boot|dev|etc|home|lib|lib32|lib64|mnt|opt|proc|root|sbin|tmp|usr|var)(/|$)}
       || $text =~ m{^[a-z]:[\\/]}i
     },
-    url_link => $args{url_name} // sub ($text) {
+    url_link => sub ($text) {
          $text =~ /^[a-z]+:\/\//i
       || $text =~ /^(file|ftps?|gopher|https?|ldapi|ldaps|mailto|mms|news|nntp|nntps|pop|rlogin|rtsp|sftp|snew|ssh|telnet|tn3270|urn|wss?):\S/i
     },
-    module => $args{module} // sub ($text) {
+    module => sub ($text) {
          $text =~ /^[a-z]+::([a-z]+(::[a-z]+)*('s)?)$/i
     },
-  ], $class;
+  );
 }
-
-=head1 METHODS
 
 =head2 split
 
  my @combos = $hcw->split($text);
 
 This method splits the text into word combo pairs.  Each pair is returned as an array reference.  The first element is the type,
-and the second is the word.  The legal types are:
-
-=over 4
-
-=item C<word>
-
-For regular human type words.
-
-=item C<path_name>
-
-For a Unix or Windows file or directory path.  VMS is not supported, sorry.
-
-=item C<url_link>
-
-For a URL.
-
-=item C<module>
-
-For a programming module.  The default is reasonable for Perl.
-
-=back
+and the second is the word.  The types are as defined when the C<$hcw> object is created, plus the C<word> type for human words.
 
 =cut
 
@@ -193,7 +209,8 @@ sub split ($self, $text)
 
 Doesn't recognize VMS paths!  Oh noes!
 
-Computer "words" are identified with a regular expression which is somewhat reasonable, but probably has a number of false negatives, and
-doesn't do any validation.
+The C<default_perl> method provides computer "words" that are identified with a regular expression which is somewhat reasonable,
+but probably has a few false positives or negatives, and doesn't do any validation for things like URLs or modules.  Modules
+like L<strict> or L<warnings> that do not have a C<::> cannot be recognized.
 
 =cut

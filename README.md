@@ -7,7 +7,9 @@ Split human and computer words in a naturalish manner
 ```perl
 use Text::HumanComputerWords;
 
-my $hcw = Text::HumanComputerWords->new;
+my $hcw = Text::HumanComputerWords->new(
+  Text::HumanComputerWords->default_perl,
+);
 
 my $text = "this is some text with a url: https://metacpan.org, "
          . "a unix path name: /usr/local/bin "
@@ -41,57 +43,37 @@ foreach my $combo ($hcw->split($text))
 
 # DESCRIPTION
 
-This module splits a line of text into words.  It attempts to identify certain computer "words" and classify them as such.
-The split on white space first, identify certain computer words (like URLs and file and directory paths) and then to split
-the remaining words on Unicode word boundaries which is usually pretty good at identifying human words.
+This module extracts human and computer words from text.  This is useful for checking the validity of these words.  Human
+words can be checked for spelling, while "computer" words like URLs can be validated by other means.  URLs for example
+could be checked for 404s and module names could be checked against a module registry like CPAN.
 
-The intent is to split a paragraph into human and computer words so that they can be checked all at once.  The URLs for example
-could be checked for 404s or other brokenness while the human words could be checked for spelling.
+The algorithm works like thus:
+
+- 1. The text is split on whitespace into fragments `/\s/`
+
+    fragments could be either a single computer word like a URL or a module, or it could be one or more human words.
+    If a fragment doesn't contain any word characters then it is skipped entirely `/\w/`.
+
+- 2. If the fragment is recognized as a computer word we are done.
+
+    Computer words can be defined any way you want.  The `default_perl` method below is reasonable for Perl technical
+    documentation.
+
+- 3. Split the fragment into words using the Unicode word boundary `/\b{wb}/`
+
+    After the split words are identified as those containing word characters `/\w/`.
 
 # CONSTRUCTOR
 
 ## new
 
 ```perl
-my $hcw = Text::HumanComputerWords->new(%options);
+my $hcw = Text::HumanComputerWords->new(@cpu);
 ```
 
-Creates a new instance of the splitter class.  The `%options` hash lets you override some of the logic for identifying
-"computer" words.  All are optional and the defaults are reasonable:
-
-- path\_name
-
-    ```perl
-    Text::HumanComputerWords->new(
-      path_name => sub ($word) {
-        # return true if $word looks like a filename path
-      },
-    );
-    ```
-
-    This is a code reference which should return true if the `$word` looks like a file or directory path.
-
-- url\_link
-
-    ```perl
-    Text::HumanComputerWords->new(
-      url_link => sub ($word) {
-        # return true if $word looks like a URL
-      },
-    );
-    ```
-
-    This is a code reference which should return true if the `$word` looks like a URL.
-
-- module
-
-    ```perl
-    Text::HumanComputerWords->new(
-      module => sub ($word) {
-        # return true if $word looks like a computer programming module
-      },
-    );
-    ```
+Creates a new instance of the splitter class.  The `@cpu` pairs lets you specify the logic for identifying
+"computer" words.  The keys are the type names and the values are code references that identify those words.
+There are two special reserved types:
 
 - skip
 
@@ -106,7 +88,47 @@ Creates a new instance of the splitter class.  The `%options` hash lets you over
     This is a code reference which should return true, if the `$word` should be skipped entirely.  The default skip code reference
     always returns false.
 
+- word
+
+    ```perl
+    Text::HumanComputerWords->new(
+      word => sub ($word) {},  # error
+    );
+    ```
+
+    The `word` type is reserved for human words, and cannot be overridden.
+
+The order of the pairs matters and a type can be specified more than once.  If a given computer word matches multiple
+types it will only be reported as the first type matches.  Example:
+
+```perl
+Text::HumanComputerWords->new(
+  foo_or_bar => sub ($word) { $word eq 'foo' },
+  foo_or_bar => sub ($word) { $word eq 'bar' },
+);
+```
+
 # METHODS
+
+## default\_perl
+
+```perl
+my @cpu = Text::HumanComputerWords->default_perl;
+```
+
+Returns the computer word pairs reasonable for a technical Perl document.  It recognizes:
+
+- path\_name
+
+    A file system path.  Something that looks like a UNIX or Windows filename or directory path.
+
+- url\_link
+
+    A URL.  The regex to recognize a URL is naive so if the URLs need to be validated they should be done separately.
+
+- module
+
+    A Perl module name.  `Something::Like::This`.
 
 ## split
 
@@ -115,30 +137,15 @@ my @combos = $hcw->split($text);
 ```
 
 This method splits the text into word combo pairs.  Each pair is returned as an array reference.  The first element is the type,
-and the second is the word.  The legal types are:
-
-- `word`
-
-    For regular human type words.
-
-- `path_name`
-
-    For a Unix or Windows file or directory path.  VMS is not supported, sorry.
-
-- `url_link`
-
-    For a URL.
-
-- `module`
-
-    For a programming module.  The default is reasonable for Perl.
+and the second is the word.  The types are as defined when the `$hcw` object is created, plus the `word` type for human words.
 
 # CAVEATS
 
 Doesn't recognize VMS paths!  Oh noes!
 
-Computer "words" are identified with a regular expression which is somewhat reasonable, but probably has a number of false negatives, and
-doesn't do any validation.
+The `default_perl` method provides computer "words" that are identified with a regular expression which is somewhat reasonable,
+but probably has a few false positives or negatives, and doesn't do any validation for things like URLs or modules.  Modules
+like [strict](https://metacpan.org/pod/strict) or [warnings](https://metacpan.org/pod/warnings) that do not have a `::` cannot be recognized.
 
 # AUTHOR
 
