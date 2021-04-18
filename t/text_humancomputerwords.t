@@ -1,6 +1,7 @@
 use Test2::V0 -no_srand => 1;
 use 5.022;
 use Text::HumanComputerWords;
+use experimental qw( signatures );
 
 subtest basic => sub {
 
@@ -20,7 +21,23 @@ subtest basic => sub {
         [ word      => 'three'                    ],
         [ module    => 'Foo::Bar::Baz'            ],
         [ module    => 'YAML::XS\'s'              ],
-      ],
+      ];
+    },
+  );
+
+};
+
+subtest skip => sub {
+
+  is(
+    Text::HumanComputerWords->new( skip => sub ($text) { $text eq 'foo/bar' } ),
+    object {
+      call [ isa => 'Text::HumanComputerWords' ] => T();
+      call_list [ split => 'one two foo/bar three' ] => [
+        [ word => 'one'   ],
+        [ word => 'two'   ],
+        [ word => 'three' ],
+      ];
     },
   );
 
