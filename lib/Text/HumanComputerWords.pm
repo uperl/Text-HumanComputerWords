@@ -202,7 +202,11 @@ sub split ($self, $text)
     {
       my $name = $self->[$i++];
       my $code = $self->[$i++];
-      if($code->($frag))
+      if($name eq 's')
+      {
+        $code->($frag);
+      }
+      elsif($code->($frag))
       {
         push @result, [ $name, $frag ] unless $name eq 'skip';
         next frag_loop;

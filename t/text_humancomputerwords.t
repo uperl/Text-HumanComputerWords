@@ -75,6 +75,29 @@ subtest 'skip' => sub {
 
 };
 
+subtest 'substitute' => sub {
+
+  is(
+    Text::HumanComputerWords->new(
+      s => sub {
+        $_[0] =~ s/([A-Z]+)/ $1/g if $_[0] =~ /^[a-z]+$/i && lcfirst($_[0]) ne lc $_[0];
+      },
+    ),
+    object {
+      call [ isa => 'Text::HumanComputerWords' ] => T();
+      call_list [ split => 'FooBarBaz oneTwoThree' ] => [
+        [ word => 'Foo' ],
+        [ word => 'Bar' ],
+        [ word => 'Baz' ],
+        [ word => 'one' ],
+        [ word => 'Two' ],
+        [ word => 'Three' ],
+      ];
+    },
+  );
+
+};
+
 subtest 'errors' => sub {
 
   local $@ = '';
