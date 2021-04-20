@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}},
 
 {{$NEXT}}
+
+0.03      2021-04-20 11:42:29 -0600
   - Added reserved type substitute (gh#4)
 
 0.02      2021-04-18 08:14:48 -0600
