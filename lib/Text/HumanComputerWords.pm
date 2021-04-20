@@ -3,7 +3,7 @@ package Text::HumanComputerWords;
 use strict;
 use warnings;
 use 5.022;
-use experimental qw( signatures );
+use experimental qw( signatures refaliasing );
 use Ref::Util qw( is_ref is_plain_coderef );
 use Carp qw( croak );
 
@@ -204,7 +204,8 @@ sub split ($self, $text)
       my $code = $self->[$i++];
       if($name eq 's')
       {
-        $code->($frag);
+        \local $_ = \$frag;
+        $code->();
       }
       elsif($code->($frag))
       {
