@@ -202,7 +202,7 @@ sub split ($self, $text)
     {
       my $name = $self->[$i++];
       my $code = $self->[$i++];
-      if($name eq 's')
+      if($name eq 'substitute')
       {
         \local $_ = \$frag;
         $code->();
