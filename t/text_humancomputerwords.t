@@ -80,7 +80,7 @@ subtest 'substitute' => sub {
   is(
     Text::HumanComputerWords->new(
       s => sub {
-        $_[0] =~ s/([A-Z]+)/ $1/g if $_[0] =~ /^[a-z]+$/i && lcfirst($_[0]) ne lc $_[0];
+        s/([A-Z]+)/ $1/g if /^[a-z]+$/i && lcfirst($_) ne lc $_;
       },
     ),
     object {
