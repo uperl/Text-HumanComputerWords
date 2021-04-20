@@ -81,7 +81,7 @@ After the split words are identified as those containing word characters C<< /\w
 
 Creates a new instance of the splitter class.  The C<@cpu> pairs lets you specify the logic for identifying
 "computer" words.  The keys are the type names and the values are code references that identify those words.
-There are two special reserved types:
+These are special reserved types:
 
 =over 4
 
@@ -95,6 +95,24 @@ There are two special reserved types:
 
 This is a code reference which should return true, if the C<$word> should be skipped entirely.  The default skip code reference
 always returns false.
+
+=item substitute
+
+ Text::HumanComputerWord->new(
+   substitute => sub {
+     # the value is passed in as $_ and can be modified
+   },
+ );
+
+This allows you to substitute the current word.  The main intent here is to allow supporting splitting CamelCase and snakeCase
+into separate words, so they can be checked as human words.  Example:
+
+ Text::HumanComputerWords->new(
+   substitute => sub {
+     # this should split both CamelCase and snakeCase
+     s/([A-Z]+)/ $1/g if /^[a-z]+$/i && lcfirst($_) ne lc $_;
+   },
+ ),
 
 =item word
 
