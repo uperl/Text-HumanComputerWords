@@ -138,7 +138,25 @@ Text::HumanComputerWords->new(
 my @cpu = Text::HumanComputerWords->default_perl;
 ```
 
-Returns the computer word pairs reasonable for a technical Perl document.  It recognizes:
+Returns the computer word pairs reasonable for a technical Perl document.  These pairs should be
+passed into ["new"](#new), optionally with extra pairs if you like, for example:
+
+```perl
+my $hcw = Text::HumanComputerWords->new(
+
+  # this needs to come first so that platypus modules are recognized before
+  # non-platypus modules in the default rule set
+  platypus_module => sub ($word) { $word =~ /^FFI::Platypus(::[A-Za-z0-9_]+)*$/ },
+
+  # the normal Perl rules.
+  Text::HumanComputerWords->default_perl,
+
+  # this can go anywhere, but we check for it last.
+  plus_one => sub ($word) { $word eq '+1' },
+);
+```
+
+By itself, this returns pairs that will recognize these types:
 
 - path\_name
 
