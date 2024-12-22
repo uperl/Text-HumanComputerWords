@@ -1,4 +1,4 @@
-# Text::HumanComputerWords ![static](https://github.com/uperl/Text-HumanComputerWords/workflows/static/badge.svg) ![linux](https://github.com/uperl/Text-HumanComputerWords/workflows/linux/badge.svg) ![macos](https://github.com/uperl/Text-HumanComputerWords/workflows/macos/badge.svg) ![windows](https://github.com/uperl/Text-HumanComputerWords/workflows/windows/badge.svg) ![msys2-mingw](https://github.com/uperl/Text-HumanComputerWords/workflows/msys2-mingw/badge.svg)
+# Text::HumanComputerWords ![static](https://github.com/uperl/Text-HumanComputerWords/workflows/static/badge.svg) ![linux](https://github.com/uperl/Text-HumanComputerWords/workflows/linux/badge.svg) ![macos](https://github.com/uperl/Text-HumanComputerWords/workflows/macos/badge.svg) ![windows](https://github.com/uperl/Text-HumanComputerWords/workflows/windows/badge.svg)
 
 Split human and computer words in a naturalish manner
 
