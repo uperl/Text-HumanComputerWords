@@ -2,4 +2,7 @@ Text-HumanComputerWords-*
 /.build/
 *.swp
 
-
+/Text-HumanComputerWords-*
+/.build
+*.old
+*.orig
